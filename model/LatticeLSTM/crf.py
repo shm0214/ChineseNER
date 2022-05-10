@@ -19,7 +19,7 @@ def log_sum_exp(vec, hidden_dim):
 class CRF(nn.Module):
 
     def __init__(self, tagset_size, use_cuda):
-        super().__init__()
+        super(CRF, self).__init__()
         self.use_cuda = use_cuda
         self.average_batch = False
         self.tagset_size = tagset_size
@@ -44,7 +44,7 @@ class CRF(nn.Module):
         seq_iter = enumerate(scores)
         _, init_values = next(seq_iter)
         partition = init_values[:, START_TAG, :].clone().view(
-            batch_size, tag_size)
+            batch_size, tag_size, 1)
         for idx, cur_values in seq_iter:
             cur_values = cur_values + partition.contiguous().view(
                 batch_size, tag_size, 1).expand(batch_size, tag_size, tag_size)
@@ -52,7 +52,7 @@ class CRF(nn.Module):
             mask_idx = mask[idx, :].view(batch_size,
                                          1).expand(batch_size, tag_size)
             masked_cur_partition = cur_partition.masked_select(mask_idx)
-            mask_idx = mask_idx.contiguous().view(batch_size, tag_size)
+            mask_idx = mask_idx.contiguous().view(batch_size, tag_size, 1)
             partition.masked_scatter_(mask_idx, masked_cur_partition)
         cur_values = self.transitions.view(1, tag_size, tag_size).expand(
             batch_size, tag_size, tag_size) + partition.contiguous().view(
@@ -83,6 +83,8 @@ class CRF(nn.Module):
             batch_size, tag_size)
         partition_history.append(partition)
         for idx, cur_values in seq_iter:
+            cur_values = cur_values + partition.contiguous().view(
+                batch_size, tag_size, 1).expand(batch_size, tag_size, tag_size)
             partition, cur_bp = torch.max(cur_values, 1)
             partition_history.append(partition)
             cur_bp.masked_fill_(

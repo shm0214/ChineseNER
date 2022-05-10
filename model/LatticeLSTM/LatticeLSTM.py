@@ -38,7 +38,7 @@ class WordLSTMCell(nn.Module):
         bias_batch = self.bias.unsqueeze(0).expand(batch_size,
                                                    *self.bias.shape)
         wh_b = torch.addmm(bias_batch, h_0, self.weight_hh)
-        wi = torch.mm(input.squeeze(1), self.weight_ih)
+        wi = torch.mm(input, self.weight_ih)
         f, i, g = torch.split(wh_b + wi, split_size_or_sections=self.hidden_dim, dim=1)
         c_1 = torch.sigmoid(f) * c_0 + torch.sigmoid(i) * torch.tanh(g)
         return c_1
@@ -179,6 +179,7 @@ class LatticeLSTM(nn.Module):
         return pretrain_embedding
 
     def forward(self, input, skip_input, hidden=None):
+        volatile_flag = skip_input[1]
         skip_input = skip_input[0]
         if not self.left2right:
             skip_input = convert_forward_gaz_to_backward(skip_input)
@@ -209,8 +210,7 @@ class LatticeLSTM(nn.Module):
             if skip_input[t]:
                 matched_num = len(skip_input[t][0])
                 word_var = torch.autograd.Variable(torch.LongTensor(
-                    skip_input[t][0]),
-                                                   requires_grad=False)
+                    skip_input[t][0]))
                 if self.use_gpu:
                     word_var = word_var.cuda()
                 word_embedding = self.word_embedding(word_var)

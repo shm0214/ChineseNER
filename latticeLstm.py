@@ -46,8 +46,8 @@ def recover_label(pred_variable, gold_variable, mask_variable, label_alphabet,
     pred_variable = pred_variable[word_recover]
     gold_variable = gold_variable[word_recover]
     mask_variable = mask_variable[word_recover]
-    batch_size = gold_variable.size(0)
-    seq_len = gold_variable.size(1)
+    batch_size = gold_variable.shape[0]
+    seq_len = gold_variable.shape[1]
     mask = mask_variable.cpu().data.numpy()
     pred_tag = pred_variable.cpu().data.numpy()
     gold_tag = gold_variable.cpu().data.numpy()
@@ -127,7 +127,7 @@ def evaluate(config, model, name):
         if not instance:
             continue
         gaz_list, batch_word, batch_biword, batch_wordlen, batch_wordrecover, batch_char, batch_charlen, batch_charrecover, batch_label, mask = batchify_with_label(
-            instance, config.use_cuda)
+            instance, config.use_cuda, True)
         tag_seq = model(gaz_list, batch_word, batch_biword, batch_wordlen,
                         batch_char, batch_charlen, batch_charrecover, mask)
         pred_label, gold_label = recover_label(tag_seq, batch_label, mask,
@@ -142,7 +142,7 @@ def evaluate(config, model, name):
     return speed, acc, p, r, f, pred_results
 
 
-def batchify_with_label(input_batch_list, use_cuda, requires_grad=True):
+def batchify_with_label(input_batch_list, use_cuda, volatile_flag=False):
     batch_size = len(input_batch_list)
     words = [sent[0] for sent in input_batch_list]
     biwords = [sent[1] for sent in input_batch_list]
@@ -151,36 +151,30 @@ def batchify_with_label(input_batch_list, use_cuda, requires_grad=True):
     labels = [sent[4] for sent in input_batch_list]
     word_seq_lengths = torch.LongTensor(list(map(len, words)))
     max_seq_len = word_seq_lengths.max()
-    word_seq_tensor = autograd.Variable(torch.zeros((batch_size, max_seq_len)),
-                                        requires_grad=requires_grad).long()
-    biword_seq_tensor = autograd.Variable(torch.zeros(
-        (batch_size, max_seq_len)),
-                                          requires_grad=requires_grad).long()
-    label_seq_tensor = autograd.Variable(torch.zeros(
-        (batch_size, max_seq_len)),
-                                         requires_grad=requires_grad).long()
-    mask = autograd.Variable(torch.zeros((batch_size, max_seq_len)),
-                             requires_grad=requires_grad).bool()
+    word_seq_tensor = torch.zeros((batch_size, max_seq_len)).long()
+    biword_seq_tensor = torch.zeros((batch_size, max_seq_len)).long()
+    label_seq_tensor = torch.zeros((batch_size, max_seq_len)).long()
+    mask = torch.zeros((batch_size, max_seq_len)).bool()
     for idx, (seq, biseq, label, seqlen) in enumerate(
             zip(words, biwords, labels, word_seq_lengths)):
         word_seq_tensor[idx, :seqlen] = torch.LongTensor(seq)
         biword_seq_tensor[idx, :seqlen] = torch.LongTensor(biseq)
         label_seq_tensor[idx, :seqlen] = torch.LongTensor(label)
-        mask[idx, :seqlen] = torch.Tensor([1] * seqlen)
+        mask[idx, :seqlen] = torch.ones(seqlen)
     word_seq_lengths, word_perm_idx = word_seq_lengths.sort(0, descending=True)
     word_seq_tensor = word_seq_tensor[word_perm_idx]
     biword_seq_tensor = biword_seq_tensor[word_perm_idx]
     label_seq_tensor = label_seq_tensor[word_perm_idx]
     mask = mask[word_perm_idx]
     pad_chars = [
-        chars[idx] + [[0]] * (max_seq_len - len(chars[idx]))
+        chars[idx] + np.zeros(max_seq_len - len(chars[idx]))
+        if max_seq_len > len(chars[idx]) else chars[idx]
         for idx in range(len(chars))
     ]
     length_list = [list(map(len, pad_char)) for pad_char in pad_chars]
     max_word_len = max(map(max, length_list))
-    char_seq_tensor = autograd.Variable(torch.zeros(
-        (batch_size, max_seq_len, max_word_len)),
-                                        requires_grad=requires_grad).long()
+    char_seq_tensor = torch.zeros(
+        (batch_size, max_seq_len, max_word_len)).long()
     char_seq_lengths = torch.LongTensor(length_list)
     for idx, (seq, seqlen) in enumerate(zip(pad_chars, char_seq_lengths)):
         for idy, (word, wordlen) in enumerate(zip(seq, seqlen)):
@@ -194,6 +188,7 @@ def batchify_with_label(input_batch_list, use_cuda, requires_grad=True):
     _, char_seq_recover = char_perm_idx.sort(0, descending=False)
     _, word_seq_recover = word_perm_idx.sort(0, descending=False)
     gaz_list = [ gazs[i] for i in word_perm_idx]
+    gaz_list.append(volatile_flag)
     if use_cuda:
         word_seq_tensor = word_seq_tensor.cuda()
         biword_seq_tensor = biword_seq_tensor.cuda()
@@ -397,8 +392,8 @@ if __name__ == '__main__':
         config.batch_size = 1
         config.use_bigram = False
         config.gaz_dropout = 0.5
-        config.norm_gaz_emb = False
-        config.fix_gaz_emb = False
+        config.norm_gaz_embedding = False
+        config.fix_gaz_embedding = False
         config_initialization(config, gaz_file, train_file, dev_file, test_file)
         config.generate_instance_with_gaz(train_file, 'train')
         config.generate_instance_with_gaz(dev_file, 'dev')
