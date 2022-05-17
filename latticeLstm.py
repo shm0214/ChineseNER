@@ -31,6 +31,7 @@ def config_initialization(config, gaz_file, train_file, dev_file, test_file):
     config.fix_alphabet()
     return config
 
+
 def predict_check(pred_variable, gold_variable, mask_variable):
     pred = pred_variable.cpu().data.numpy()
     gold = gold_variable.cpu().data.numpy()
@@ -187,7 +188,7 @@ def batchify_with_label(input_batch_list, use_cuda, volatile_flag=False):
     char_seq_tensor = char_seq_tensor[char_perm_idx]
     _, char_seq_recover = char_perm_idx.sort(0, descending=False)
     _, word_seq_recover = word_perm_idx.sort(0, descending=False)
-    gaz_list = [ gazs[i] for i in word_perm_idx]
+    gaz_list = [gazs[i] for i in word_perm_idx]
     gaz_list.append(volatile_flag)
     if use_cuda:
         word_seq_tensor = word_seq_tensor.cuda()
@@ -199,6 +200,7 @@ def batchify_with_label(input_batch_list, use_cuda, volatile_flag=False):
         char_seq_recover = char_seq_recover.cuda()
         mask = mask.cuda()
     return gaz_list, word_seq_tensor, biword_seq_tensor, word_seq_lengths, word_seq_recover, char_seq_tensor, char_seq_lengths, char_seq_recover, label_seq_tensor, mask
+
 
 def train(config, save_model_dir, seg=True):
     print("Train model...")
@@ -308,20 +310,24 @@ def train(config, save_model_dir, seg=True):
                   (test_cost, speed, acc))
         gc.collect()
 
+
 def load_model_decode(model_dir, config, name, use_cuda, seg=True):
     config.use_cuda = use_cuda
     print("Load Model from file: ", model_dir)
     model = BiLSTM_CRF(config)
     model.load_state_dict(torch.load(model_dir))
-    print("Decode %s data ..."%(name))
+    print("Decode %s data ..." % (name))
     start_time = time.time()
     speed, acc, p, r, f, pred_results = evaluate(config, model, name)
     end_time = time.time()
     time_cost = end_time - start_time
     if seg:
-        print("%s: time:%.2fs, speed:%.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"%(name, time_cost, speed, acc, p, r, f))
+        print(
+            "%s: time:%.2fs, speed:%.2fst/s; acc: %.4f, p: %.4f, r: %.4f, f: %.4f"
+            % (name, time_cost, speed, acc, p, r, f))
     else:
-        print("%s: time:%.2fs, speed:%.2fst/s; acc: %.4f"%(name, time_cost, speed, acc))
+        print("%s: time:%.2fs, speed:%.2fst/s; acc: %.4f" %
+              (name, time_cost, speed, acc))
     return pred_results
 
 
@@ -335,14 +341,13 @@ if __name__ == '__main__':
                         choices=['train', 'test', 'decode'],
                         help='update algorithm',
                         default='train')
-    parser.add_argument('--savemodel',
-                        default="data/model/saved_model.lstmcrf.")
+    parser.add_argument('--savemodel', default="results/latticeLSTM/")
     parser.add_argument('--savedcfg',
                         help='Dir of saved data setting',
                         default="data/save.cfg")
-    parser.add_argument('--train', default="data/conll03/train.bmes")
-    parser.add_argument('--dev', default="data/conll03/dev.bmes")
-    parser.add_argument('--test', default="data/conll03/test.bmes")
+    parser.add_argument('--train', default="data/demo/demo.train.char")
+    parser.add_argument('--dev', default="data/demo/demo.dev.char")
+    parser.add_argument('--test', default="data/demo/demo.test.char")
     parser.add_argument('--seg', default="True")
     parser.add_argument('--extendalphabet', default="True")
     parser.add_argument('--raw')
@@ -394,7 +399,8 @@ if __name__ == '__main__':
         config.gaz_dropout = 0.5
         config.norm_gaz_embedding = False
         config.fix_gaz_embedding = False
-        config_initialization(config, gaz_file, train_file, dev_file, test_file)
+        config_initialization(config, gaz_file, train_file, dev_file,
+                              test_file)
         config.generate_instance_with_gaz(train_file, 'train')
         config.generate_instance_with_gaz(dev_file, 'dev')
         config.generate_instance_with_gaz(test_file, 'test')
@@ -411,7 +417,10 @@ if __name__ == '__main__':
     elif status == 'decode':
         config = load_config_setting(cfg_dir)
         config.generate_instance_with_gaz(raw_file, 'raw')
-        decode_results = load_model_decode(model_dir, config, 'raw', use_cuda, seg)
+        decode_results = load_model_decode(model_dir, config, 'raw', use_cuda,
+                                           seg)
         config.write_decoded_results(output_file, decode_results, 'raw')
     else:
-        print("Invalid argument! Please use valid arguments! (train/test/decode)")
+        print(
+            "Invalid argument! Please use valid arguments! (train/test/decode)"
+        )
