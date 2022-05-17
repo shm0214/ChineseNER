@@ -343,8 +343,8 @@ if __name__ == '__main__':
                         default='train')
     parser.add_argument('--savemodel', default="results/latticeLSTM/")
     parser.add_argument('--savedcfg',
-                        help='Dir of saved data setting',
-                        default="data/save.cfg")
+                        help='Dir of saved config setting',
+                        default="results/save.cfg")
     parser.add_argument('--train', default="data/demo/demo.train.char")
     parser.add_argument('--dev', default="data/demo/demo.dev.char")
     parser.add_argument('--test', default="data/demo/demo.test.char")
