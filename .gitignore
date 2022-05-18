@@ -1,5 +1,6 @@
 results
 data
+model/bert-base-chinese
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

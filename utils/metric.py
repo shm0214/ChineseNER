@@ -2,7 +2,7 @@ import numpy as np
 import sys
 
 
-def get_ner_fmeasure(golden_lists, predict_lists, label_type="BMES"):
+def get_ner_fmeasure(golden_lists, predict_lists, label_type="BMES", print_num=True):
     sent_num = len(golden_lists)
     golden_full = []
     predict_full = []
@@ -42,7 +42,8 @@ def get_ner_fmeasure(golden_lists, predict_lists, label_type="BMES"):
     else:
         f_measure = 2 * precision * recall / (precision + recall)
     accuracy = (right_tag + 0.0) / all_tag
-    print("gold_num = ", golden_num, " pred_num = ", predict_num, " right_num = ", right_num)
+    if print_num:
+        print("gold_num = ", golden_num, " pred_num = ", predict_num, " right_num = ", right_num)
     return accuracy, precision, recall, f_measure
 
 

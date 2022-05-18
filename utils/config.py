@@ -25,8 +25,14 @@ class Config:
         self.gaz_lower = False
         self.gaz = Gazetteer(self.gaz_lower)
         self.gaz_alphabet = Alphabet('gaz')
+
+        self.gaz_count = {}
+        self.gaz_split = {}
+        self.biword_count = {}
+
         self.fix_gaz_embedding = False
         self.use_gaz = True
+        self.use_count = False
 
         self.tagScheme = "NoSeg"
         self.char_features = "LSTM"
@@ -40,6 +46,10 @@ class Config:
         self.dev_Ids = []
         self.test_Ids = []
         self.raw_Ids = []
+
+        self.train_split_index = []
+        self.dev_split_index = []
+
         self.use_bigram = True
         self.word_embedding_dim = 50
         self.biword_embedding_dim = 50
@@ -67,6 +77,7 @@ class Config:
         self.lr_decay = 0.05
         self.clip = 5.0
         self.momentum = 0
+        self.num_layer = 4
 
     def show_config_summary(self):
         print("CONFIG SUMMARY START:")
@@ -142,6 +153,7 @@ class Config:
 
     def build_alphabet(self, input_file):
         in_lines = open(input_file, 'r', encoding='utf-8').readlines()
+        seqlen = 0
         for idx in range(len(in_lines)):
             line = in_lines[idx]
             if len(line) > 2:
@@ -153,13 +165,16 @@ class Config:
                 self.label_alphabet.add(label)
                 self.word_alphabet.add(word)
                 if idx < len(in_lines) - 1 and len(in_lines[idx + 1]) > 2:
-                    biword = word + in_lines[
-                        idx + 1].strip().split()[0]
+                    biword = word + in_lines[idx + 1].strip().split()[0]
                 else:
                     biword = word + NULLKEY
                 self.biword_alphabet.add(biword)
                 for char in word:
                     self.char_alphabet.add(char)
+
+                seqlen += 1
+            else:
+                seqlen = 0
         self.word_alphabet_size = self.word_alphabet.size()
         self.biword_alphabet_size = self.biword_alphabet.size()
         self.char_alphabet_size = self.char_alphabet.size()
@@ -188,7 +203,7 @@ class Config:
         else:
             print("Gaz file is None, load nothing")
 
-    def build_gaz_alphabet(self, input_file):
+    def build_gaz_alphabet(self, input_file, count=False):
         in_lines = open(input_file, 'r', encoding='utf-8').readlines()
         word_list = []
         for line in in_lines:
@@ -199,11 +214,28 @@ class Config:
                 word_list.append(word)
             else:
                 w_length = len(word_list)
+                entitys = []
                 for idx in range(w_length):
                     matched_entity = self.gaz.enumerateMatchList(
                         word_list[idx:])
                     for entity in matched_entity:
                         self.gaz_alphabet.add(entity)
+                        index = self.gaz_alphabet.get_index(entity)
+                        self.gaz_count[index] = self.gaz_count.get(index, 0)
+                if count:
+                    entitys.sort(key=lambda x: -len(x))
+                    while entitys:
+                        longest = entitys[0]
+                        longest_index = self.gaz_alphabet.get_index(longest)
+                        self.gaz_count[longest_index] = self.gaz_count.get(
+                            longest_index, 0) + 1
+
+                        gazlen = len(longest)
+                        for i in range(gazlen):
+                            for j in range(i + 1, gazlen + 1):
+                                covering_gaz = longest[i:j]
+                                if covering_gaz in entitys:
+                                    entitys.remove(covering_gaz)
                 word_list = []
         print("gaz alphabet size:", self.gaz_alphabet.size())
 
@@ -281,6 +313,41 @@ class Config:
                 input_file, self.gaz, self.word_alphabet, self.biword_alphabet,
                 self.char_alphabet, self.gaz_alphabet, self.label_alphabet,
                 self.number_normalized, self.MAX_SENTENCE_LENGTH)
+        else:
+            print(
+                "Error: you can only generate train/dev/test instance! Illegal input:%s"
+                % (name))
+
+    def generate_instance_with_gaz_softlexicon(self, input_file, name):
+        self.fix_alphabet()
+        if name == "train":
+            self.train_texts, self.train_Ids = read_instance_with_gaz_softLexicon(
+                self.num_layer, input_file, self.gaz, self.word_alphabet,
+                self.biword_alphabet, self.biword_count, self.char_alphabet,
+                self.gaz_alphabet, self.gaz_count, self.gaz_split,
+                self.label_alphabet, self.number_normalized,
+                self.MAX_SENTENCE_LENGTH)
+        elif name == "dev":
+            self.dev_texts, self.dev_Ids = read_instance_with_gaz_softLexicon(
+                self.num_layer, input_file, self.gaz, self.word_alphabet,
+                self.biword_alphabet, self.biword_count, self.char_alphabet,
+                self.gaz_alphabet, self.gaz_count, self.gaz_split,
+                self.label_alphabet, self.number_normalized,
+                self.MAX_SENTENCE_LENGTH)
+        elif name == "test":
+            self.test_texts, self.test_Ids = read_instance_with_gaz_softLexicon(
+                self.num_layer, input_file, self.gaz, self.word_alphabet,
+                self.biword_alphabet, self.biword_count, self.char_alphabet,
+                self.gaz_alphabet, self.gaz_count, self.gaz_split,
+                self.label_alphabet, self.number_normalized,
+                self.MAX_SENTENCE_LENGTH)
+        elif name == "raw":
+            self.raw_texts, self.raw_Ids = read_instance_with_gaz_softLexicon(
+                self.num_layer, input_file, self.gaz, self.word_alphabet,
+                self.biword_alphabet, self.biword_count, self.char_alphabet,
+                self.gaz_alphabet, self.gaz_count, self.gaz_split,
+                self.label_alphabet, self.number_normalized,
+                self.MAX_SENTENCE_LENGTH)
         else:
             print(
                 "Error: you can only generate train/dev/test instance! Illegal input:%s"
