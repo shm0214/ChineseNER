@@ -4,7 +4,7 @@ from fastNLP import Const
 import numpy as np
 import os
 from fastNLP import cache_results
-from fastNLP_module import StaticEmbedding
+from model.FLAT.fastNLP_module import StaticEmbedding
 
 
 
@@ -338,7 +338,7 @@ def load_weibo_ner(path,
                    only_train_min_freq=0,
                    char_word_dropout=0.01):
     from fastNLP.io.loader import ConllLoader
-    from utils import get_bigrams
+    from .utils import get_bigrams
 
     loader = ConllLoader(['chars', 'target'])
     train_path = os.path.join(path, 'weiboNER_2nd_conll.train_deseg')

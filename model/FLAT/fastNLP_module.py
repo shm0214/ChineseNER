@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 
 from fastNLP.core import logger
-from utils import MyDropout
+from .utils import MyDropout
 from fastNLP.embeddings.contextual_embedding import ContextualEmbedding
 from fastNLP.io.file_utils import PRETRAINED_BERT_MODEL_DIR
 

@@ -62,7 +62,7 @@ def equip_chinese_ner_with_lexicon(datasets,
 
         return result
 
-    from V0.utils_ import Trie
+    from model.FLAT.utils import Trie
     from functools import partial
     from fastNLP.core import Vocabulary
     from fastNLP.embeddings import StaticEmbedding

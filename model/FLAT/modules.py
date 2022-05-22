@@ -4,7 +4,7 @@ import torch
 import math
 import collections
 from fastNLP import seq_len_to_mask
-from utils import print_info, size2MB, MyDropout
+from .utils import print_info, size2MB, MyDropout
 
 
 def get_embedding(max_seq_len,

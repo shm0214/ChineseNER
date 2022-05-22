@@ -7,6 +7,7 @@ from .utils import print_info
 from .utils import get_crf_zero_init
 from fastNLP import seq_len_to_mask
 from .utils import MyDropout
+from .modules import Transformer_Encoder
 
 
 def get_embedding(max_seq_len,

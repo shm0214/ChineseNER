@@ -5,15 +5,15 @@ parser.add_argument('--clip_msra', action='store_true')
 
 args = parser.parse_args()
 
-yangjie_rich_pretrain_unigram_path = './embeddings/gigaword_chn.all.a2b.uni.ite50.vec'
-yangjie_rich_pretrain_bigram_path = './embeddings/gigaword_chn.all.a2b.bi.ite50.vec'
-yangjie_rich_pretrain_word_path = './embeddings/ctb.50d.vec'
-yangjie_rich_pretrain_char_and_word_path = './embeddings/yangjie_word_char_mix.txt'
-lk_word_path = './embeddings/sgns.merge.word'
+yangjie_rich_pretrain_unigram_path = '../embeddings/gigaword_chn.all.a2b.uni.ite50.vec'
+yangjie_rich_pretrain_bigram_path = '../embeddings/gigaword_chn.all.a2b.bi.ite50.vec'
+yangjie_rich_pretrain_word_path = '../embeddings/ctb.50d.vec'
+yangjie_rich_pretrain_char_and_word_path = '../embeddings/yangjie_word_char_mix.txt'
+lk_word_path = '../embeddings/sgns.merge.word'
 
-msra_ner_cn_path = './data/MSRANER'
-resume_ner_path = './data/ResumeNER'
-weibo_ner_path = './data/WeiboNER'
+msra_ner_cn_path = '../data/MSRANER'
+resume_ner_path = '../data/ResumeNER'
+weibo_ner_path = '../data/WeiboNER'
 
 
 lexicon_f = open(yangjie_rich_pretrain_word_path, 'r', encoding='utf-8')
