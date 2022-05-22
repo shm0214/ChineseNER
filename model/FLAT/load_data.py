@@ -7,7 +7,6 @@ from fastNLP import cache_results
 from model.FLAT.fastNLP_module import StaticEmbedding
 
 
-
 @cache_results(_cache_fp='cache/resume_ner', _refresh=False)
 def load_resume_ner(path,
                     char_embedding_path=None,
@@ -17,7 +16,7 @@ def load_resume_ner(path,
                     bigram_min_freq=1,
                     only_train_min_freq=0):
     from fastNLP.io.loader import ConllLoader
-    from utils import get_bigrams
+    from .utils import get_bigrams
 
     train_path = os.path.join(path, 'train.char.bmes')
     dev_path = os.path.join(path, 'dev.char.bmes')
@@ -115,18 +114,15 @@ def equip_chinese_ner_with_skip(datasets,
                                 word_embedding_path=None,
                                 word_min_freq=1,
                                 only_train_min_freq=0):
-    from utils import Trie, get_skip_path
+    from .utils import Trie, get_skip_path
     from functools import partial
     w_trie = Trie()
     for w in w_list:
         w_trie.insert(w)
 
-
     def skips2skips_l2r(chars, w_trie):
 
-
         lexicons = get_skip_path(chars, w_trie=w_trie)
-
 
         result = [[] for _ in range(len(chars))]
 
@@ -140,7 +136,6 @@ def equip_chinese_ner_with_skip(datasets,
         return result
 
     def skips2skips_r2l(chars, w_trie):
-
 
         lexicons = get_skip_path(chars, w_trie=w_trie)
 
@@ -236,7 +231,6 @@ def load_yangjie_rich_pretrain_word_list(embedding_path, drop_characters=True):
     return w_list
 
 
-
 @cache_results(_cache_fp='cache/msraner1', _refresh=False)
 def load_msra_ner_1(path,
                     char_embedding_path=None,
@@ -247,7 +241,7 @@ def load_msra_ner_1(path,
                     bigram_min_freq=1,
                     only_train_min_freq=0):
     from fastNLP.io.loader import ConllLoader
-    from utils import get_bigrams
+    from .utils import get_bigrams
     if train_clip:
         train_path = os.path.join(path, 'train_dev.char.bmes_clip1')
         test_path = os.path.join(path, 'test.char.bmes_clip1')
@@ -395,7 +389,6 @@ def load_weibo_ner(path,
                                   field_name='target',
                                   new_field_name='target')
 
-
     vocabs['bigram'] = bigram_vocab
 
     embeddings = {}
@@ -420,5 +413,3 @@ def load_weibo_ner(path,
         embeddings['bigram'] = bigram_embedding
 
     return datasets, vocabs, embeddings
-
-
