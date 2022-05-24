@@ -2,9 +2,9 @@
 
 Final Project for NLP in Nankai CS.
 
-to be implement:
+Implement:
 
-- Lattice-LSTM
-- FLAT
-- SoftLexicon
-
+-   Lattice-LSTM
+-   FLAT
+-   SoftLexicon
+-   SoftLexicon & Lattice-LSTM
